@@ -1,0 +1,70 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type":"shell",
+			"label": "x86 windows check directories",
+			"command":"",
+			"args":[
+				"IF",
+				"EXIST",
+				"${workspaceFolder}\\build\\windows\\x86\\main\\",
+				"(",
+				"ECHO",
+				"build directory found: ${workspaceFolder}\\build\\windows\\x86\\main\\",
+				")",
+				"ELSE",
+				"(",
+				"mkdir",
+				"${workspaceFolder}\\build\\windows\\x86\\main\\",
+				"&&",
+				"ECHO",
+				"creating directory: ${workspaceFolder}\\build\\windows\\x86\\main\\",
+				")"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"type": "shell",
+			"label": "x86 windows build",
+			"command": "C:\\MinGW\\bin\\g++.exe",
+			"args": [
+				"-g",
+				// "${file}",
+				"src/*.cpp",
+				"-o",
+				"${workspaceFolder}\\build\\windows\\x86\\main\\main.exe",
+
+				"-L\"C:\\OpenGL\\lib\\Release\\Win32\"",
+				"-L\"C:\\ProgramData\\chocolatey\\lib\\glfw3\\tools\\glfw-3.0.4.bin.WIN32\\lib-mingw\"",
+				
+				"-I\"C:\\ProgramData\\chocolatey\\lib\\glfw3\\tools\\glfw-3.0.4.bin.WIN32\\include\\GLFW\"",
+				"-I\"C:\\OpenGL\\include\\GL\"",
+				"-I\"C:\\Users\\drewb\\OneDrive\\Documents\\CPP\\cherno-opengl\\src\"",
+				
+				"-lglfw3", // this is the .dll file
+				"-l:glfw3dll.a", // the colon is needed because the library doesn't start with "lib"
+				"-lgdi32", // apparently needed when static linking glfw3
+				"-lglu32",
+				"-lglew32", // opengl extension loader
+				"-lopengl32", // apparently needed when static linking glfw3?
+				"-Wall",
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"dependsOn":[
+				"x86 windows check directories"
+			],
+		}
+	]
+}
