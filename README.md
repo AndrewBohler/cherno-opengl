@@ -3,6 +3,17 @@ I'm learning OpenGL by following The Cherno's YouTube series:
 
 [![The Cherno: Welcome to OpenGL](https://img.youtube.com/vi/W3gAzLwfIP0/0.jpg)](https://youtu.be/W3gAzLwfIP0 "The Cherno: Welcome to OpenGL")
 
+# Build using make:
+
+`make dependencies` generate dependencies for source files in src/
+
+`make vendor` force build source files in src/vendor
+
+`make build` build source files in src/
+
+`make run` runs the exe (needs to be run from project directory, not bin/!
+
+
 This is currently set up to work with my system, using:
 
 Windows 10 64-bit
