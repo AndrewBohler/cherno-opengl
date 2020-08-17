@@ -2,7 +2,9 @@
 #define SHADER_H
 
 #include <string>
-#include "glew.h"
+#include <iostream>
+#include <unordered_map>
+#include <GL/glew.h>
 
 struct ShaderProgramSource{
     std::string VertexSource;
@@ -12,7 +14,7 @@ struct ShaderProgramSource{
 class Shader{
     const std::string m_FilePath;
     unsigned int m_RendererID;
-    // caching for shader uniforms
+    std::unordered_map<std::string, int> m_UniformLocationCache;
 
     public:
         Shader(const std::string& filepath);

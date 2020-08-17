@@ -1,1 +1,4 @@
-build/*
+bin/*
+obj/*
+imgui.ini
+.vscode/*

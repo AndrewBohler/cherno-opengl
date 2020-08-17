@@ -1,7 +1,7 @@
 #ifndef INDEX_BUFFER_H
 #define INDEX_BUFFER_H
 
-#include <glew.h>
+#include <GL/glew.h>
 
 class IndexBuffer{
     unsigned int m_RendererID;
@@ -16,4 +16,4 @@ class IndexBuffer{
         inline unsigned int GetCount() const {return m_Count;}
 };
 
-#endif
+#endif // INDEX_BUFFER_H

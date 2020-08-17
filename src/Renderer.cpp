@@ -12,5 +12,5 @@ void Renderer::Draw(
     va.Bind();
     ib.Bind();
     shader.Bind();
-    glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr);  
+    glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr);
 }

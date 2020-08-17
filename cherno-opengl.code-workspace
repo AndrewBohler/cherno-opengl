@@ -45,7 +45,10 @@
 			"xutility": "cpp",
 			"fstream": "cpp",
 			"sstream": "cpp",
-			"vector": "cpp"
+			"vector": "cpp",
+			"list": "cpp",
+			"unordered_map": "cpp",
+			"xhash": "cpp"
 		}
 	},
 	"launch": {
@@ -55,8 +58,8 @@
 				"name": "(Windows) Launch",
 				"type": "cppvsdbg",
 				"request": "launch",
-				"program": "${workspaceFolder}/build/glut",
-				"preLaunchTask": "build",
+				"program": "${workspaceFolder}/build/win32/cherno-opengl.exe",
+				"preLaunchTask": null,
 				"args": [],
 				"stopAtEntry": false,
 				"cwd": "${workspaceFolder}",

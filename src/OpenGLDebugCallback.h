@@ -2,8 +2,8 @@
 #define OPEN_GL_DEBUG_CALLBACK_H
 
 #include <iostream>
-#include "glew.h"
-#include "glfw3.h"
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 void APIENTRY glDebugOutput(
     GLenum source, 
@@ -17,7 +17,7 @@ void APIENTRY glDebugOutput(
     // ignore non-significant error/warning codes
     if(id == 131169 || id == 131185 || id == 131218 || id == 131204) return; 
 
-    std::cout << "---------------" << std::endl;
+    std::cout << "------------------------------" << std::endl;
     std::cout << "Debug message (" << id << "): " <<  message << std::endl;
 
     switch (source)

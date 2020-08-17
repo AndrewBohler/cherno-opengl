@@ -1,7 +1,7 @@
 #ifndef VERTEX_BUFFER_LAYOUT_H
 #define VERTEX_BUFFER_LAYOUT_H
 
-#include "glew.h"
+#include <GL/glew.h>
 #include <vector>
 #include <iostream>
 
@@ -64,4 +64,4 @@ inline void VertexBufferLayout::Push<unsigned char>(unsigned int count){
 
 inline std::vector<VertexBufferElement> const& VertexBufferLayout::GetElements() const {return m_Elements;}
 
-#endif
+#endif // VERTEX_BUFFER_LAYOUT_H

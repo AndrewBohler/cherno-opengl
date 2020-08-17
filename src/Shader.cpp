@@ -101,9 +101,9 @@ unsigned int Shader::CreateShader(const std::string& vertexShader, const std::st
     int status = GL_FALSE;
     glGetProgramiv(program, GL_VALIDATE_STATUS, &status);
     if (status == GL_FALSE){
-        std::cout << "program " << program << " validation failed!" << std::endl;
+        std::cout << "[Shader " << program << "] error: validation failed for " << m_FilePath << std::endl;
     } else {
-        std::cout << "program " << program << " validation success!" << std::endl;
+        std::cout << "[Shader " << program << "] program validated" << std::endl;
     }
 
     // shaders are now in the program, free the memory
@@ -113,9 +113,9 @@ unsigned int Shader::CreateShader(const std::string& vertexShader, const std::st
     return program;
 }
 
-void Shader::Bind() const {glUseProgram(m_RendererID);}
-void Shader::Unbind() const {glUseProgram(0);}
-unsigned int Shader::GetID() {return m_RendererID;}
+void Shader::Bind() const { glUseProgram(m_RendererID); }
+void Shader::Unbind() const { glUseProgram(0); }
+unsigned int Shader::GetID() { return m_RendererID; }
 
 void Shader::SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3){
     glUniform4f(GetUniformLocation(name), v0, v1, v2, v3);
@@ -157,9 +157,30 @@ void Shader::SetUniform<unsigned int>(const std::string& name, unsigned int coun
     }
 }
 
+template<>
+void Shader::SetUniform<int>(const std::string& name, unsigned int count, int* value){
+    if (!count) return;
+    int location = GetUniformLocation(name);
+    if (location  == -1) return;
+    switch(count){
+        case 1  : glUniform1i(location, *value); return;
+        case 2  : glUniform2i(location, value[0], value[1]); return;
+        case 3  : glUniform3i(location, value[0], value[1], value[2]); return;
+        case 4  : glUniform4i(location, value[0], value[1], value[2], value[3]); return;
+        default : std::cout << "cannot set uniform, 'count' should be 1, 2, 3, or 4, not " << count << std::endl; return;
+    }
+}
+
 int Shader::GetUniformLocation(const std::string& name){
+    if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end())
+        return m_UniformLocationCache[name];
+        
     int location = glGetUniformLocation(m_RendererID, name.c_str());
-    if (location == -1) std::cout << "Warning: uniform '" << name << "' does not exist!" << std::endl;
+    if (location == -1)
+        std::cout << "[Shader " << m_RendererID << "] Warning: uniform '"
+            << name << "' does not exist in " << m_FilePath << std::endl;
+    
+    m_UniformLocationCache[name] = location;
     return location;
 }
 

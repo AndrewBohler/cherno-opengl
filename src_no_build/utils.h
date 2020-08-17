@@ -1,4 +1,4 @@
-#ifndef UTILS_h
+#ifndef UTILS_H
 #define UTILS_H
 
 #include "glew.h"
@@ -44,4 +44,4 @@ class Renderer{
 
 
 
-#endif
+#endif // UTILS_H

@@ -4,7 +4,8 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/dep/include/**",
-                "C:/OpenGL/include/**"
+                "C:/OpenGL/include/**",
+                "${workspaceFolder}/src/vendor"
             ],
             "defines": [
                 "_DEBUG",

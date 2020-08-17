@@ -1,7 +1,7 @@
 #ifndef MODELa_H
 #define MODEL_H
 
-#include "glew.h"
+#include <GL/glew.h>
 
 #include "IndexBuffer.h"
 #include "VertexArray.h"
