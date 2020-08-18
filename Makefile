@@ -14,6 +14,7 @@ SRCDIR := src
 
 SRCDIRS := src $(foreach path,$(shell dir src /AD /B /S),$(subst $(PROJECTDIR)\,,$(path)))
 
+CXX = g++
 EXENAME := cherno-opengl.exe
 HEADERS := $(wildcard $(SRCDIR)/*.h)
 CPPSRCS := $(wildcard $(SRCDIR)/*.cpp)
@@ -28,7 +29,6 @@ LDFLAGS := $(addprefix -L,$(externalLibs))
 LDFLAGS += -Ldep/lib/win32
 
 INCLUDEPATHS := \
-$(SRCDIRS) \
 dep\include \
 src\vendor \
 $(OPENGLDIR)\include
@@ -44,7 +44,7 @@ LDLIBS :=\
 -lglew32 \
 -lopengl32
 
-CPPFLAGS := -g -Wall -DGLFW_DLL
+CXXFLAGS := -g -Wall -DGLFW_DLL
 
 DEPFILES := $(foreach dep,$(wildcard $(OBJDIR)/*.d),$(dep))
 include $(DEPFILES)
@@ -61,7 +61,7 @@ vendor:
 	$(foreach subdir,$(wildcard src/vendor/*/),\
 		$(foreach source,$(wildcard $(subdir)*.cpp),\
 			& echo   $(source) -^> $(OBJDIR)/$(notdir $(source:.cpp=.o)) & \
-			g++ $(CPPFLAGS) -c $(source) -o $(OBJDIR)/$(notdir $(source:.cpp=.o)) \
+			$(CXX) $(CXXFLAGS) -c $(source) -o $(OBJDIR)/$(notdir $(source:.cpp=.o)) \
 			$(LDFLAGS) $(IFLAGS) $(LDLIBS) \
 		)\
 	)
@@ -73,16 +73,16 @@ build: $(BINDIR)/$(EXENAME)
 force-compile:
 	@echo compiling objects \
 	$(foreach file,$(OBJECTS), & echo $(subst $(OBJDIR),$(SRCDIR),$(file:.o=.cpp)) -^>  $(file) &\
-		g++ $(CPPFLAGS) -c $(subst $(OBJDIR),$(SRCDIR),$(file:.o=.cpp)) -o $(file) $(LDFLAGS) $(IFLAGS) $(LDLIBS)\
+		$(CXX) $(CXXFLAGS) -c $(subst $(OBJDIR),$(SRCDIR),$(file:.o=.cpp)) -o $(file) $(LDFLAGS) $(IFLAGS) $(LDLIBS)\
 	)
 
 dependencies:
 	@echo Building dependency files...\
 	$(foreach src,$(CPPSRCS), \
-	& g++ -MM $(src) \
+	& $(CXX) -MM $(src) \
 	-MT"$(OBJDIR)/$(notdir $(src:.cpp=.o))" \
-	-o $(subst $(SRCDIR),$(OBJDIR),$(src:.cpp=.d))) \
-	$(LDFLAGS) $(IFLAGS) $(LDLIBS)
+	-o $(subst $(SRCDIR),$(OBJDIR),$(src:.cpp=.d)) \
+	$(LDFLAGS) $(IFLAGS) $(LDLIBS))
 
 clean: clean-obj
 	@echo $^ complete
@@ -103,7 +103,7 @@ clean-dep:
 # build exe
 $(BINDIR)/$(EXENAME): $(OBJECTS) | $(OBJDIR) $(BINDIR) copy_dlls
 	@echo building $(EXENAME)
-	g++ $(CPPFLAGS) -o $@ $(foreach obj,$(wildcard $(OBJDIR)/*.o),$(obj)) $(LDFLAGS) $(IFLAGS) $(LDLIBS)
+	$(CXX) $(CXXFLAGS) -o $@ $(foreach obj,$(wildcard $(OBJDIR)/*.o),$(obj)) $(LDFLAGS) $(IFLAGS) $(LDLIBS)
 
 # create object directory
 $(OBJDIR):
@@ -114,13 +114,16 @@ $(BINDIR):
 	mkdir $(BINDIR)
 
 obj/%.o:
-	@echo $< -^> $@ & g++ $(CPPFLAGS) -c $< -o $@ $(LDFLAGS) $(IFLAGS) $(LDLIBS)
+	@echo $< -^> $@ & $(CXX) $(CXXFLAGS) -c $< -o $@ $(LDFLAGS) $(IFLAGS) $(LDLIBS)
 
 run:
-	@$(subst /,\,$(BINDIR)\$(EXENAME))
+	$(subst /,\,$(BINDIR)\$(EXENAME))
 
 copy_dlls:
 	xcopy dep\lib\win32\ $(BINDIR)\ /y /d
 
 info:
 	@echo *info not configured*
+
+check-file-dep:
+	@if exist $(file) ($(CXX) $(CXXFLAGS) -MM $(file) $(LDFLAGS) $(IFLAGS) $(LDLIBS)) else (echo could not find file "$(file)")
