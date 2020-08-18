@@ -59,7 +59,7 @@ void main(){
     //     (y_offset < 5.0 ? (y_offset - 5.0) * 3.0 : (y_offset - 4.0) * 3.0)
     // );
 
-    gl_Position = rotated * u_MVP;
+    gl_Position = u_MVP * rotated;
 };
 
 
