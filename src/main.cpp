@@ -2,7 +2,12 @@
 #define GLFW_DLL // define this when static linking the gflw dll
 // #define GLFW_INCLUDE_NONE // unsure if this is needed
 
-#pragma message "main.cpp: Including files..."
+#ifndef WINDOW_WIDTH
+#define WINDOW_WIDTH 1024
+#endif
+#ifndef WINDOW_HEIGHT
+#define WINDOW_HEIGHT 720
+#endif
 
 #include <GL/glew.h>
 // #include <GL/GLU.h>
@@ -23,7 +28,11 @@
 #include "VertexBuffer.h"
 #include "VertexBufferLayout.h"
 
-// // #include "ImGuiImports.h"
+// comment 
+
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
@@ -55,7 +64,7 @@ int main(void){
     }
     
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(1024, 720, "cherno-opengl tutorial", NULL, NULL);
+    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "cherno-opengl tutorial", NULL, NULL);
     if (!window){
         glfwTerminate();
         std::cout << "window creation failed!" << std::endl;
@@ -149,8 +158,24 @@ int main(void){
     IndexBuffer ib(triangles, 3 * 2 * 6);
     
     std::cout << "creating default shader" << std::endl;
+
+    float min_width = -WINDOW_WIDTH / 2;
+    float max_width = WINDOW_HEIGHT / 2;
+    float min_height = -WINDOW_HEIGHT / 2;
+    float max_height = WINDOW_HEIGHT / 2;
+    float min_depth = min_height;
+    float max_depth = max_height;
+
+    glm::vec3 camera{0.0f, 0.0f, 0.0f};
+
+    glm::mat4 proj = glm::ortho(min_width/100, max_width/100, min_height/100, max_height/100, min_depth/100, max_depth/100);
+    glm::mat4 view = glm::translate(glm::mat4(1.0f), camera);
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, -0.5f, 0.0f));
+    glm::mat4 mvp = proj * view * model;
+
     Shader shader("res/shaders/rotation_test.glsl");
     shader.Bind();
+    shader.SetUniformMat4f("u_MVP", 1, mvp);
 
     int u_Texture = 0;
 
@@ -165,8 +190,6 @@ int main(void){
 
     std::cout << "creating renderer" << std::endl;
     Renderer renderer;
-
-    // just add a line
 
     std::cout << "setting up ImGui" << std::endl;
     /* set of Dear ImGui context */
@@ -201,17 +224,21 @@ int main(void){
         history[0][999] = color[0];
         history[1][999] = color[1];
         history[2][999] = color[2];
-        history[3][999] = color[0] * color[1] * color[2];
+        history[3][999] = (color[0] + color[1] + color[2]) / 3;
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::Begin("Variables");                          // Create a window called "Hello, world!" and append into it.
-        ImGui::Text("Controls");               // Display some text (you can use a format strings too)
+
+        ImGui::Begin("Variables");
+        ImGui::Text("Controls");
         if(ImGui::Button("Times Step Control")) ts_manual = !ts_manual;
-        ImGui::SliderFloat("float", &ts, 0.0f, 100.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-        ImGui::ColorEdit3("multiply color", (float*)&color); // Edit 3 floats representing a color
+        ImGui::SliderFloat("float", &ts, 0.0f, 100.0f);
+        ImGui::SliderFloat("camera x", &camera[0], -10.0f, 10.0f);
+        ImGui::SliderFloat("camera y", &camera[1], -10.0f, 10.0f);
+        ImGui::SliderFloat("camera z", &camera[2], -10.0f, 10.0f);
+        ImGui::ColorEdit3("multiply color", (float*)&color);
         ImGui::PlotHistogram("RGB", (float*)&color, 3, 0, "Color", 0.0f, 1.0f, ImVec2(300.0f, 100.0));
         ImGui::Text("time = %f", ts);
         ImGui::PlotLines("Red", history[0], 1000, 0, "", 0.0f, 1.0f, ImVec2(300.0f, 50.0f));
@@ -219,7 +246,8 @@ int main(void){
         ImGui::PlotLines("Blue", history[2], 1000, 0, "", 0.0f, 1.0f, ImVec2(300.0f, 50.0f));
         ImGui::PlotLines("Combined", history[3], 1000, 0, "", 0.0f, 1.0f, ImVec2(300.0f, 50.0f));
 
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+            1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
 
         if(!ts_manual) ts = (float)glfwGetTime();
@@ -228,11 +256,17 @@ int main(void){
         color[1] = sin(ts + 2.0 * PI / 3.0) / 2.0 + 0.5;
         color[2] = sin(ts + 4.0 * PI / 3.0) / 2.0 + 0.5;
 
+        glm::mat4 proj = glm::ortho(min_width/100, max_width/100, min_height/100, max_height/100, min_depth/100, max_depth/100);
+        glm::mat4 view = glm::translate(glm::mat4(1.0f), camera);
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, -0.5f, 0.0f));
+        glm::mat4 mvp = proj * view * model;
+        
         shader.Bind();
         texture.Bind();
         shader.SetUniform<float>("u_Time", 1, &ts);
         shader.SetUniform<float>("u_Color", 3, color);
         shader.SetUniform<int>("u_Texture", 1, &u_Texture);
+        shader.SetUniformMat4f("u_MVP", 1, mvp);
         
 
         // for (unsigned int i = 0; i < 100; i++){

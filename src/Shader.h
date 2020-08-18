@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <GL/glew.h>
 
+#include "glm/glm.hpp"
+
 struct ShaderProgramSource{
     std::string VertexSource;
     std::string FragmentSource;
@@ -26,6 +28,7 @@ class Shader{
 
         // set uniforms
         void SetUniform4f(const std::string&, float v0, float v1, float v2, float v3);
+        void SetUniformMat4f(const std::string&, int count, const glm::mat4 matrix);
         
         template<typename T>
         void SetUniform(const std::string&, unsigned int count, T* value);

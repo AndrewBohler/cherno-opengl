@@ -8,6 +8,7 @@ layout(location = 2) in vec2 texCoord;
 uniform float u_Time;
 uniform uint u_ID;
 uniform vec3 u_Color;
+uniform mat4 u_MVP;
 
 out vec3 v_Color;
 out vec2 v_TexCoord;
@@ -58,7 +59,7 @@ void main(){
     //     (y_offset < 5.0 ? (y_offset - 5.0) * 3.0 : (y_offset - 4.0) * 3.0)
     // );
 
-    gl_Position = rotated;
+    gl_Position = rotated * u_MVP;
 };
 
 
