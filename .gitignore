@@ -1,5 +1,7 @@
 .vscode/*
 bin/*
+build/*
+cmake/*
 obj/*
 src_ignore/*
 imgui.ini
