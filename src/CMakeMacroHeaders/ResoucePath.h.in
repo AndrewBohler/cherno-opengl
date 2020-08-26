@@ -1,0 +1,2 @@
+#pragma once
+#define RESOURCE_ROOT_DIR "@RESOURCE_ROOT_DIR@/"

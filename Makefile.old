@@ -1,0 +1,125 @@
+SHELL=cmd.exe
+
+OPENGLDIR := C:\OpenGL
+PROJECTDIR := $(shell echo %CD%)
+
+LINKEROPTIONS := -Wl,-rpath,lib
+
+define \n
+
+
+endef
+
+SRCDIRS := \
+$(PROJECTDIR)\src \
+$(PROJECTDIR)\src\tests
+
+# dont include the glm folder here because it's a header only library
+# also because we don't want to build glm\detail\glm.cpp wich is not needed
+VENDIRS := \
+$(foreach d,$(foreach v, \
+	$(PROJECTDIR)\src\vendor\imgui \
+	$(PROJECTDIR)\src\vendor\stb_image, \
+$v $(shell dir $v /A:D /B /S)),$d)
+
+USRSRCS := $(foreach f,$(SRCDIRS),$(addprefix $f\,$(shell dir $f\*.cpp /B 2>nul)))
+USROBJS := $(subst $(PROJECTDIR)\src\,$(PROJECTDIR)\obj\,$(USRSRCS:.cpp=.o))
+
+VENSRCS := $(foreach f,$(VENDIRS),$(addprefix $f\,$(shell dir $f\*.cpp /B 2>nul)))
+VENOBJS := $(subst $(PROJECTDIR)\src\,$(PROJECTDIR)\obj\,$(VENSRCS:.cpp=.o))
+
+OBJECTS := $(USROBJS) $(VENOBJS)
+OBJDIRS := $(sort $(dir $(OBJECTS)))
+
+CXX ?= g++
+EXENAME := cherno-opengl.exe
+
+# g++ -L flags
+externalLibs := $(OPENGLDIR)\lib\release\Win32 \
+
+# -L
+LDFLAGS := $(addprefix -L,$(externalLibs))
+LDFLAGS += -Ldep/lib/win32
+
+includePaths := \
+$(OPENGLDIR)\include \
+$(PROJECTDIR)\dep\include \
+$(PROJECTDIR)\src \
+$(PROJECTDIR)\src\vendor
+
+
+IFLAGS = $(addprefix -I, $(includePaths))
+
+# g++ -l flags, order matters!
+LDLIBS :=\
+-lglfw3 \
+-l:libglfw3dll.a \
+-lgdi32 \
+-lglu32 \
+-lglew32 \
+-lopengl32
+
+CXXFLAGS := -g -Wall -DGLFW_DLL
+
+DEPFILES := $(shell dir obj\*.d /S /B 2>nul)
+# -include $(DEPFILES)
+$(info Loaded $(words $(DEPFILES)) dependencies, run `make dependencies` to update them)
+
+.PHONY: all build clean dependencies info run \
+clean-all clean-bin clean-dep clean-obj clean-ven \
+check-file-dep check-var
+
+build: $(OBJECTS) | directories copy_dlls
+	@echo building $(EXENAME) & \
+	$(CXX) $(CXXFLAGS) -o $(PROJECTDIR)\bin\$(EXENAME) $^ $(LDFLAGS) $(IFLAGS) $(LDLIBS) $(LINKEROPTIONS)
+
+run:
+	bin\$(EXENAME)
+
+dependencies: $(USROBJS:.o=.d)
+	@echo dependencies created!
+
+directories:
+	@echo creating directories...\
+	$(foreach d,$(OBJDIRS), & IF NOT EXIST $d (mkdir $d) && echo   $d || echo   $d -- error!)
+	@IF NOT EXIST bin (mkdir bin) && echo   %CD%\$(BINDIR) || echo   %CD%\$(BINDIR) -- error!
+
+clean: clean-obj
+
+clean-all: clean-obj clean-vendor clean-bin clean-dep
+
+clean-bin:
+	@$(eval files:=$(addprefix $(PROJECTDIR)\bin\,$(shell dir $(PROJECTDIR)\bin\*.exe /B 2>nul) $(shell dir $(PROJECTDIR)\bin\*.dll /B 2>nul)))\
+	IF NOT $(words $(files)) == 0 (del $(files))${\n}echo cleaned $(words $(files)) files in $(PROJECTDIR)\bin
+
+clean-obj:
+	@$(eval count:=$(words $(shell $(foreach f,$(USROBJS),IF EXIST $f (del $f & echo 1)${\n}))))\
+	echo cleaned $(count) non-vendor .o files in $(PROJECTDIR)\obj
+
+clean-vendor:
+	@$(eval count:=$(words $(shell $(foreach f,$(VENOBJS),IF EXIST $f (del $f & echo 1)${\n}))))\
+	echo cleaned $(count) vendor .o files in $(PROJECTDIR)\obj
+
+clean-dep: $(eval files:=$(shell dir obj\*.d /S /B 2>nul))
+	@IF NOT $(words $(files)) == 0 (del $(files)) & echo cleaned $(words $(files)) .d files in $(PROJECTDIR)\obj
+	
+info:
+	@echo *info not configured*
+
+check-file-dep:
+	$(eval file=$(PROJECTDIR)\$(subst $(PROJECTDIR)\,,$(subst /,\,$(file))))
+	@if exist $(file) ($(CXX) $(CXXFLAGS) -MM $(file) -MT $(subst \src\,\obj\,$(file:.cpp=.o)) $(LDFLAGS) $(IFLAGS) $(LDLIBS)) else (echo could not find file "$(file)")
+
+check-var:
+	@echo $(var):$(foreach w,$($(var)), & echo   $w)
+
+# internal rules
+$(PROJECTDIR)\obj\\%.o: $(PROJECTDIR)\src\%.cpp
+	@echo $(subst $(PROJECTDIR)\,,$<) -^> $(subst $(PROJECTDIR)\,,$@) & \
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(LDFLAGS) $(IFLAGS) $(LDLIBS)
+
+$(PROJECTDIR)\obj\\%.d: $(PROJECTDIR)\src\%.cpp
+	$(CXX) -MM $< -MT $(@:.d=.o)" -o $@ $(LDFLAGS) $(IFLAGS) $(LDLIBS)
+
+copy_dlls:
+	xcopy dep\lib\win32\ bin\ /y /d

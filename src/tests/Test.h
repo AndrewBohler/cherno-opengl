@@ -4,15 +4,17 @@
 #include <GL/glew.h>
 
 namespace test{
-    class Test{
-        public:
-            Test() {}
-            virtual ~Test() {}
+class Test{
+    public:
+        Test() {}
+        virtual ~Test() {}
 
-            virtual void OnUpdate() {}
-            virtual void OnRender() {}
-            virtual void OnImGUIRender() {}
-    };
-}
+        virtual void OnUpdate(float deltaTime) {}
+        virtual void OnRender() {}
+        virtual void OnImGUIRender() {}
+        virtual const char* GetTitle() {}
+};
+
+} // namespace test
 
 #endif // TEST_H

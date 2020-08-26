@@ -1,5 +1,6 @@
+.vscode/*
 bin/*
 obj/*
+src_ignore/*
 imgui.ini
-.vscode/*
 *.code-workspace

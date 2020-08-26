@@ -2,16 +2,12 @@
 #define GLFW_DLL // define this when static linking the gflw dll
 // #define GLFW_INCLUDE_NONE // unsure if this is needed
 
-#ifndef WINDOW_WIDTH
-#define WINDOW_WIDTH 1024
-#endif
-#ifndef WINDOW_HEIGHT
-#define WINDOW_HEIGHT 720
-#endif
-
+/* vvv ordered includes vvv */
 #include <GL/glew.h>
 // #include <GL/GLU.h>
 #include <GLFW/glfw3.h>
+/* ^^^ ordered includes ^^^ */
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -22,13 +18,14 @@
 #include "IndexBuffer.h"
 #include "OpenGLDebugCallback.h"
 #include "Renderer.h"
-#include "Texture.h"
 #include "Shader.h"
+#include "Texture.h"
 #include "VertexArray.h"
 #include "VertexBuffer.h"
 #include "VertexBufferLayout.h"
 
-// comment 
+#include "tests/ClearColorTest.h"
+#include "tests/Test.h"
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -37,7 +34,14 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 
-/* this is checked in main() */
+/* main.cpp defines */
+#ifndef WINDOW_WIDTH
+#define WINDOW_WIDTH 1024
+#endif
+#ifndef WINDOW_HEIGHT
+#define WINDOW_HEIGHT 720
+#endif
+
 #define ENABLE_GL_ERROR_CALLBACK true
 #define DEBUG true
 
@@ -45,8 +49,15 @@
 
 unsigned long long frame = 0;
 
-// I forget why does this take in void? is this a typo?
-int main(void){
+void renderTestWindows(std::vector<test::Test*> tests){
+    for (auto t : tests){
+        ImGui::Begin(t->GetTitle());
+        t->OnImGUIRender();
+        ImGui::End();
+    }
+}
+
+int main(void){ // I forget why does this take in void? is this a typo?
     
     GLFWwindow* window;
 
@@ -208,6 +219,8 @@ int main(void){
     float color[3]{0.5f, 0.5f, 0.5f};
     float history[4][1000];
 
+    test::TestClearColor test;
+
     std::cout << "\n*** begin render ***" << std::endl;
     std::cout << "------------------------------" << std::endl;
 
@@ -215,23 +228,26 @@ int main(void){
     while (!glfwWindowShouldClose(window)){
         /* Begin rendering here */
         renderer.Clear();
-        for (int i = 0; i < 999; i++) {
+        test.OnRender();
+        
+        for (int i = 0; i < 499; i++) {
             history[0][i] = history[0][i+1];
             history[1][i] = history[1][i+1];
             history[2][i] = history[2][i+1];
             history[3][i] = history[3][i+1];
         }
-        history[0][999] = color[0];
-        history[1][999] = color[1];
-        history[2][999] = color[2];
-        history[3][999] = (color[0] + color[1] + color[2]) / 3;
+        history[0][499] = color[0];
+        history[1][499] = color[1];
+        history[2][499] = color[2];
+        history[3][499] = (color[0] + color[1] + color[2]) / 3;
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
 
-        ImGui::Begin("Variables");
+        ImGui::Begin("Debug");
+        test.OnImGUIRender();
         ImGui::Text("Controls");
         if(ImGui::Button("Times Step Control")) ts_manual = !ts_manual;
         ImGui::SliderFloat("float", &ts, 0.0f, 100.0f);
@@ -241,10 +257,10 @@ int main(void){
         ImGui::ColorEdit3("multiply color", (float*)&color);
         ImGui::PlotHistogram("RGB", (float*)&color, 3, 0, "Color", 0.0f, 1.0f, ImVec2(300.0f, 100.0));
         ImGui::Text("time = %f", ts);
-        ImGui::PlotLines("Red", history[0], 1000, 0, "", 0.0f, 1.0f, ImVec2(300.0f, 50.0f));
-        ImGui::PlotLines("Green", history[1], 1000, 0, "", 0.0f, 1.0f, ImVec2(300.0f, 50.0f));
-        ImGui::PlotLines("Blue", history[2], 1000, 0, "", 0.0f, 1.0f, ImVec2(300.0f, 50.0f));
-        ImGui::PlotLines("Combined", history[3], 1000, 0, "", 0.0f, 1.0f, ImVec2(300.0f, 50.0f));
+        ImGui::PlotLines("Red", history[0], 500, 0, "", 0.0f, 1.0f, ImVec2(300.0f, 50.0f));
+        ImGui::PlotLines("Green", history[1], 500, 0, "", 0.0f, 1.0f, ImVec2(300.0f, 50.0f));
+        ImGui::PlotLines("Blue", history[2], 500, 0, "", 0.0f, 1.0f, ImVec2(300.0f, 50.0f));
+        ImGui::PlotLines("Combined", history[3], 500, 0, "", 0.0f, 1.0f, ImVec2(300.0f, 50.0f));
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
             1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -256,9 +272,9 @@ int main(void){
         color[1] = sin(ts + 2.0 * PI / 3.0) / 2.0 + 0.5;
         color[2] = sin(ts + 4.0 * PI / 3.0) / 2.0 + 0.5;
 
-        glm::mat4 proj = glm::ortho(min_width/100, max_width/100, min_height/100, max_height/100, min_depth/100, max_depth/100);
+        glm::mat4 proj = glm::perspective(45.0f, ((float)WINDOW_WIDTH/(float)WINDOW_HEIGHT), 1.0f, 100.0f);
         glm::mat4 view = glm::translate(glm::mat4(1.0f), camera);
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, -0.5f, 0.0f));
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -10.0f));
         glm::mat4 mvp = proj * view * model;
         
         shader.Bind();
