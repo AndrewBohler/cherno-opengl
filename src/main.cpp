@@ -1,5 +1,10 @@
+// this is likely defined by the compiler
+#ifndef GLEW_STATIC
 #define GLEW_STATIC
-#define GLFW_DLL // define this when static linking the gflw dll
+#endif // GLEW_STATIC
+
+// I think cmake handles this...
+// #define GLFW_DLL // define this when static linking the gflw dll
 // #define GLFW_INCLUDE_NONE // unsure if this is needed
 
 /* vvv ordered includes vvv */
@@ -49,8 +54,8 @@
 
 unsigned long long frame = 0;
 
-void renderTestWindows(std::vector<test::Test*> tests){
-    for (auto t : tests){
+void renderTestWindows(std::vector<test::Test*> tests_v){
+    for (auto t : tests_v){
         ImGui::Begin(t->GetTitle());
         t->OnImGUIRender();
         ImGui::End();
