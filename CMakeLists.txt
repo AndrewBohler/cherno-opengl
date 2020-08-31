@@ -44,7 +44,7 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 message(STATUS "Adding subdirectory lib/glew")
 list(APPEND CMAKE_MESSAGE_INDENT "  ")
     add_definitions(-DGLEW_STATIC)
-    add_subdirectory(lib/glew EXCLUDE_FROM_ALL)
+    add_subdirectory(lib/glew/build/cmake EXCLUDE_FROM_ALL)
     target_link_libraries(${PROJECT_NAME} PRIVATE libglew_static)
 list(POP_BACK CMAKE_MESSAGE_INDENT)
 
