@@ -79,7 +79,7 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/include"
 )
 
-# Put all libraries into a variable
+# Unsure if this is necessary since glew and glfw build with cmake...
 # (g++ -l flags)
 set(LIBS
     gdi32
