@@ -1,7 +1,5 @@
 // this is likely defined by the compiler
-#ifndef GLEW_STATIC
-#define GLEW_STATIC
-#endif // GLEW_STATIC
+// #define GLEW_STATIC
 
 // I think cmake handles this...
 // #define GLFW_DLL // define this when static linking the gflw dll
@@ -29,8 +27,10 @@
 #include "VertexBuffer.h"
 #include "VertexBufferLayout.h"
 
+#ifdef BUILD_TESTS
 #include "tests/ClearColorTest.h"
 #include "tests/Test.h"
+#endif // BUILD_TESTS
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -53,14 +53,6 @@
 #define PI 3.14159265359
 
 unsigned long long frame = 0;
-
-void renderTestWindows(std::vector<test::Test*> tests_v){
-    for (auto t : tests_v){
-        ImGui::Begin(t->GetTitle());
-        t->OnImGUIRender();
-        ImGui::End();
-    }
-}
 
 int main(void){ // I forget why does this take in void? is this a typo?
     
@@ -224,7 +216,12 @@ int main(void){ // I forget why does this take in void? is this a typo?
     float color[3]{0.5f, 0.5f, 0.5f};
     float history[4][1000];
 
-    test::TestClearColor test;
+    #ifdef BUILD_TESTS
+    test::Test* currentTest = nullptr;
+    test::TestMenu* testMenu = new test::TestMenu(currentTest);
+    currentTest = testMenu;
+    testMenu->RegisterTest<test::TestClearColor>("Clear Color");
+    #endif // BUILD_TESTS
 
     std::cout << "\n*** begin render ***" << std::endl;
     std::cout << "------------------------------" << std::endl;
@@ -233,7 +230,6 @@ int main(void){ // I forget why does this take in void? is this a typo?
     while (!glfwWindowShouldClose(window)){
         /* Begin rendering here */
         renderer.Clear();
-        test.OnRender();
         
         for (int i = 0; i < 499; i++) {
             history[0][i] = history[0][i+1];
@@ -250,9 +246,22 @@ int main(void){ // I forget why does this take in void? is this a typo?
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        #ifdef BUILD_TESTS
+        if (currentTest)
+        {
+            currentTest->OnUpdate(0.0f);
+            currentTest->OnRender();
+            ImGui::Begin("Test");
+            if (currentTest != testMenu && ImGui::Button("<-")){
+                delete currentTest;
+                currentTest = testMenu;
+            }
+            currentTest->OnImGUIRender();
+            ImGui::End();
+        }
+        #endif // BUILD_TESTS
 
         ImGui::Begin("Debug");
-        test.OnImGUIRender();
         ImGui::Text("Controls");
         if(ImGui::Button("Times Step Control")) ts_manual = !ts_manual;
         ImGui::SliderFloat("float", &ts, 0.0f, 100.0f);

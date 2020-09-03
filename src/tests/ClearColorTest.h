@@ -3,10 +3,12 @@
 
 #include "Test.h"
 
+#include <string>
+
 namespace test {
 class TestClearColor : public Test
 {
-    const char* m_Title;
+    std::string m_Title;
     float m_ClearColor[4];
 
 public:
@@ -16,7 +18,7 @@ public:
     void OnUpdate(float deltaTime) override;
     void OnRender() override;
     void OnImGUIRender() override;
-    const char* GetTitle() override;
+    std::string GetTitle() override;
 };
 
 } // namespace test

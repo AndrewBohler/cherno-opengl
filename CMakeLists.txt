@@ -14,31 +14,36 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/lib)
 
 # Add our sources
 file(GLOB CPP_SOURCES
-    ${CMAKE_SOURCE_DIR}/src/*.cpp
-    ${CMAKE_SOURCE_DIR}/src/tests/*.cpp
+    src/*.cpp
+    src/*.h
+    src/CMakeMacroHeaders/*.h
 )
 
 # Add vendor sources
 file(GLOB_RECURSE VENDOR_SOURCES
-    ${CMAKE_SOURCE_DIR}/src/vendor/imgui/*.cpp
-    ${CMAKE_SOURCE_DIR}/src/vendor/stb_image/*.cpp
-)
-	
-# Add all header files
-file(GLOB_RECURSE HEADER_FILES
-    ${CMAKE_SOURCE_DIR}/src/*.h
-    ${CMAKE_SOURCE_DIR}/src/*.hpp
+    src/vendor/imgui/*.cpp
+    src/vendor/imgui/*.h
+    src/vendor/stb_image/*.cpp
+    src/vendor/stb_image/*.h
 )
 
 # Output executable
 add_executable(
     ${PROJECT_NAME}
-    ${HEADER_FILES}
     ${VENDOR_SOURCES}
     ${CPP_SOURCES}
 )
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+# build the tests in src/tests
+option(BUILD_TESTS "build with the tests in src/tests" OFF)
+if(BUILD_TESTS)
+    file(GLOB TESTS_SOURCES
+        src/tests/*.cpp
+        src/tests/*.h
+    )
+    target_sources(${PROJECT_NAME} PRIVATE ${TESTS_SOURCES})
+    target_compile_definitions(${PROJECT_NAME} PRIVATE BUILD_TESTS)
+endif()
 
 # GLEW
 message(STATUS "Adding subdirectory lib/glew")
@@ -88,3 +93,8 @@ set(LIBS
 
 # Define the link libraries
 target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBS})
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/res $<TARGET_FILE_DIR:${PROJECT_NAME}>/res
+)

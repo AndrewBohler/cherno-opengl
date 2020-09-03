@@ -8,6 +8,7 @@ namespace test {
 
 TestClearColor::TestClearColor()
     : m_ClearColor{0.0f, 0.0f, 0.0f, 0.0f}
+    , m_Title("Clear Color Test")
 {
 
 }
@@ -27,10 +28,12 @@ void TestClearColor::OnRender(){
 }
 
 void TestClearColor::OnImGUIRender(){
+    ImGui::Begin(m_Title.c_str());
     ImGui::ColorEdit4("Clear Color", m_ClearColor);
+    ImGui::End();
 }
 
-const char* TestClearColor::GetTitle(){
+std::string TestClearColor::GetTitle(){
     return m_Title;
 }
 
