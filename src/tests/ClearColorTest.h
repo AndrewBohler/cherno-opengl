@@ -5,20 +5,23 @@
 
 #include <string>
 
+#include "Renderer.h"
+
 namespace test {
 class TestClearColor : public Test
 {
-    std::string m_Title;
+    static const std::string m_Title;
     float m_ClearColor[4];
+    Renderer* m_Renderer;
 
 public:
-    TestClearColor();
+    TestClearColor(Renderer*);
     ~TestClearColor();
 
     void OnUpdate(float deltaTime) override;
     void OnRender() override;
     void OnImGUIRender() override;
-    std::string GetTitle() override;
+    std::string GetTitle() override { return m_Title; }
 };
 
 } // namespace test
