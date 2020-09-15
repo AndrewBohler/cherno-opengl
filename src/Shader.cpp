@@ -5,8 +5,6 @@
 #include <string>
 #include <sstream>
 
-#include "glm/glm.hpp"
-
 // #include "Renderer.h"
 
 
@@ -18,7 +16,8 @@ Shader::Shader(const std::string& filepath)
 }
 
 Shader::~Shader(){
-
+    glDeleteProgram(m_RendererID);
+    std::cout << "[Shader " << m_RendererID << "] destroyed!" << std::endl;
 }
 
 unsigned int Shader::CompileShader(unsigned int type, const std::string& source){
@@ -130,11 +129,28 @@ void Shader::SetUniformMat4f(const std::string& name, int count, const glm::mat4
     glUniformMatrix4fv(location, count, GL_FALSE, &matrix[0][0]);
 }
 
+/********************************/
+/****** Templated Uniforms ******/
+
 template<typename T>
 void Shader::SetUniform(const std::string& name, unsigned int count, T* values){
     GetUniformLocation(name);
     std::cout << "SetUniform error: invalid type, template specialization doesn't exist" << std::endl;
     return;
+}
+
+template<typename T>
+void Shader::SetUniform(const std::string& name, T value){
+    GetUniformLocation(name);
+    std::cout << "SetUniform error: invalid type, template specialization doesn't exist" << std::endl;
+    return;
+}
+
+template<>
+void Shader::SetUniform<float>(const std::string& name, float value){
+    int location = GetUniformLocation(name);
+    if (location == -1) return;
+    glUniform1f(location, value);
 }
 
 template<>
@@ -153,6 +169,13 @@ void Shader::SetUniform<float>(const std::string& name, unsigned int count, floa
 }
 
 template<>
+void Shader::SetUniform<unsigned int>(const std::string& name, unsigned int value){
+    int location = GetUniformLocation(name);
+    if (location == -1) return;
+    glUniform1ui(location, value);
+}
+
+template<>
 void Shader::SetUniform<unsigned int>(const std::string& name, unsigned int count, unsigned int* value){
     if (!count) return;
     int location = GetUniformLocation(name);
@@ -164,6 +187,13 @@ void Shader::SetUniform<unsigned int>(const std::string& name, unsigned int coun
         case 4  : glUniform4ui(location, value[0], value[1], value[2], value[3]); return;
         default : std::cout << "cannot set uniform, 'count' should be 1, 2, 3, or 4, not " << count << std::endl; return;
     }
+}
+
+template<>
+void Shader::SetUniform<int>(const std::string& name, int value){
+    int location = GetUniformLocation(name);
+    if (location  == -1) return;
+    glUniform1i(location, value);
 }
 
 template<>
@@ -179,6 +209,9 @@ void Shader::SetUniform<int>(const std::string& name, unsigned int count, int* v
         default : std::cout << "cannot set uniform, 'count' should be 1, 2, 3, or 4, not " << count << std::endl; return;
     }
 }
+
+/****** End Templated Uniforms ******/
+/************************************/
 
 int Shader::GetUniformLocation(const std::string& name){
     if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end())
