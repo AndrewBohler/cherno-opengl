@@ -1,8 +1,8 @@
 #include "IndexBuffer.h"
 #include "Renderer.h"
 
-IndexBuffer::IndexBuffer(const unsigned int* data, const unsigned int count)
-    : m_Count(count)
+IndexBuffer::IndexBuffer(const unsigned int* data, const unsigned int count, GLenum renderMode)
+    : m_Count(count), m_RenderMode(renderMode)
 {
     ASSERT(sizeof(unsigned int) == sizeof(GLint)); // usually these are the same size
     
@@ -15,11 +15,10 @@ IndexBuffer::~IndexBuffer(){
     glDeleteBuffers(1, &m_RendererID);
 }
 
-void IndexBuffer::Bind() const{
+void IndexBuffer::Bind() const {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_RendererID);
 }
 
-void IndexBuffer::Unbind() const{
+void IndexBuffer::Unbind() const {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
-
