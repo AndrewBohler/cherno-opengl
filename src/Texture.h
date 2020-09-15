@@ -21,6 +21,8 @@ class Texture{
         int GetHeight() const { return m_Height; }
         int GetBPP() const { return m_BPP; }
         unsigned char* GetLocalBufferData() const { return m_LocalBuffer; }
+        unsigned int GetID() const { return m_RendererID; }
+        std::string GetFilePath() const { return m_FilePath; }
 
 };
 
