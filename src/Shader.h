@@ -32,6 +32,7 @@ class Shader{
         
         template<typename T>
         void SetUniform(const std::string&, unsigned int count, T* value);
+        template<typename T> void SetUniform(const std::string&, T value);
 
     private:
         ShaderProgramSource ParseShader(const std::string& filepath);
