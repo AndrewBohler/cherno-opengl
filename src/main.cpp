@@ -11,12 +11,13 @@
 #include <GLFW/glfw3.h>
 /* ^^^ ordered includes ^^^ */
 
-#include <iostream>
+#include <exception>
+#include <cstring>
 #include <fstream>
+#include <iostream>
+#include <math.h>
 #include <string>
 #include <sstream>
-#include <math.h>
-#include <cstring>
 
 #include "IndexBuffer.h"
 #include "OpenGLDebugCallback.h"
@@ -28,8 +29,12 @@
 #include "VertexBufferLayout.h"
 
 #ifdef BUILD_TESTS
-#include "tests/ClearColorTest.h"
 #include "tests/Test.h"
+#include "tests/TestAnimatePlane.h"
+#include "tests/ClearColorTest.h"
+#include "tests/TestTexture2D.h"
+#include "tests/TestTexture3D.h"
+#include "tests/TestWaterTexture.h"
 #endif // BUILD_TESTS
 
 #include "glm/glm.hpp"
@@ -110,62 +115,10 @@ int main(void){ // I forget why does this take in void? is this a typo?
     glfwSwapInterval(1); // limit fps, doesn't seem to work...
 
     /* setup before rendering */
-    const float vertices[(3 + 3 + 2) * 8]{
-        /*   3D location           rgb color      2D texture coords 
-         *(x,     y,     z),   ( r,     g,     b),   (  x,     y)
-         */
-         1.0f,  1.0f,  1.0f,   1.0f,  0.0f,  0.0f,   1.0f, 1.0f, // 0
-         1.0f, -1.0f,  1.0f,   1.0f,  0.0f,  0.0f,   1.0f, 0.0f, // 1
-        -1.0f,  1.0f,  1.0f,   1.0f,  0.0f,  0.0f,   0.0f, 1.0f, // 2
-        -1.0f, -1.0f,  1.0f,   1.0f,  0.0f,  0.0f,   0.0f, 0.0f, // 3
-
-         1.0f,  1.0f, -1.0f,   0.0f,  0.0f,  1.0f,   0.0f, 1.0f, // 4
-         1.0f, -1.0f, -1.0f,   0.0f,  0.0f,  1.0f,   0.0f, 0.0f, // 5
-        -1.0f,  1.0f, -1.0f,   0.0f,  0.0f,  1.0f,   1.0f, 1.0f, // 6
-        -1.0f, -1.0f, -1.0f,   0.0f,  0.0f,  1.0f,   1.0f, 0.0f, // 7
-    };
-
-    const unsigned int triangles[3 * 2 * 6]{
-        0, 1, 2,   3, 2, 1, // front
-        6, 5, 4,   5, 6, 7, // back
-        6, 2, 3,   3, 7, 6, // left
-        4, 5, 0,   1, 0, 5, // right
-        0, 2, 4,   6, 4, 2, // top
-        1, 5, 3,   7, 3, 5, // bottom
-    };
 
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    VertexBufferLayout vb_layout;
-    vb_layout.Push<float>(3); // 3D position
-    vb_layout.Push<float>(3); // 3 channel color
-    vb_layout.Push<float>(2); // 2D texture coords
-
-    std::cout << "creating default vertex buffer" << std::endl;
-
-    VertexArray va;
-    VertexBuffer vb(vertices, 8 * vb_layout.GetStride());
-    va.AddBuffer(vb, vb_layout);
-
-    std::cout << "bulding vertex buffer layout" << std::endl;
-
-    std::cout << "vb_layout:" << std::endl;
-    std::cout << "\tstride: " << vb_layout.GetStride() << std::endl;
-    int elcount = 0;
-    for (VertexBufferElement element : vb_layout.GetElements()){
-        std::cout << "\tElement " << elcount << std::endl;
-        std::cout << "\t\ttype: " << element.type << std::endl;
-        std::cout << "\t\tcount: " << element.count << std::endl;
-        std::cout << "\t\tnormalized: " << (element.normalized ? "yes" : "no") << std::endl;
-        elcount++;
-    }
-
-    std::cout << "creating default index buffer" << std::endl;
-    IndexBuffer ib(triangles, 3 * 2 * 6);
-    
-    std::cout << "creating default shader" << std::endl;
 
     float min_width = -WINDOW_WIDTH / 2;
     float max_width = WINDOW_HEIGHT / 2;
@@ -174,53 +127,38 @@ int main(void){ // I forget why does this take in void? is this a typo?
     float min_depth = min_height;
     float max_depth = max_height;
 
-    glm::vec3 camera{0.0f, 0.0f, 0.0f};
-
-    glm::mat4 proj = glm::ortho(min_width/100, max_width/100, min_height/100, max_height/100, min_depth/100, max_depth/100);
-    glm::mat4 view = glm::translate(glm::mat4(1.0f), camera);
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, -0.5f, 0.0f));
-    glm::mat4 mvp = proj * view * model;
-
-    Shader shader("res/shaders/rotation_test.glsl");
-    shader.Bind();
-    shader.SetUniformMat4f("u_MVP", 1, mvp);
-
-    int u_Texture = 0;
-
-    Texture texture("res/textures/drew_blurry.png");
-    texture.Bind();
-    shader.SetUniform<int>("u_Texture", 1, &u_Texture);
-
-    va.Unbind();
-    vb.Unbind();
-    ib.Unbind();
-    shader.Unbind();
+    /* Model View Projection matrix with glm */
+    // glm::vec3 camera{0.0f, 0.0f, 0.0f};
+    // glm::mat4 proj = glm::ortho(min_width/100, max_width/100, min_height/100, max_height/100, min_depth/100, max_depth/100);
+    // glm::mat4 view = glm::translate(glm::mat4(1.0f), camera);
+    // glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, -0.5f, 0.0f));
+    // glm::mat4 mvp = proj * view * model;
 
     std::cout << "creating renderer" << std::endl;
     Renderer renderer;
 
     std::cout << "setting up ImGui" << std::endl;
-    /* set of Dear ImGui context */
+    /* setup Dear ImGui context */
     std::cout << "ImGui version " << IMGUI_CHECKVERSION() << std::endl;
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     /* Setup Platform/Renderer bindings */
     ImGui_ImplOpenGL3_Init("#version 330");
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    /* Setup ImGui style */
+    /* Setup Dear ImGui style */
     ImGui::StyleColorsDark();
 
-    GLfloat ts = 0.0f;
-    bool ts_manual = false;
-    unsigned int id = 0;
-    float color[3]{0.5f, 0.5f, 0.5f};
-    float history[4][1000];
-
     #ifdef BUILD_TESTS
+    std::stringstream debug_stream;
     test::Test* currentTest = nullptr;
-    test::TestMenu* testMenu = new test::TestMenu(currentTest);
+    test::TestMenu* testMenu = new test::TestMenu(currentTest, &renderer);
     currentTest = testMenu;
     testMenu->RegisterTest<test::TestClearColor>("Clear Color");
+    testMenu->RegisterTest<test::TestTexture2D>("2D Texture");
+    testMenu->RegisterTest<test::TestAnimatePlane>("2D Plane Animation");
+    testMenu->RegisterTest<test::TestWaterTexture>("Water Texture Animation");
+    testMenu->RegisterTest<test::TestTexture3D>("3D Texture");
+
     #endif // BUILD_TESTS
 
     std::cout << "\n*** begin render ***" << std::endl;
@@ -230,81 +168,51 @@ int main(void){ // I forget why does this take in void? is this a typo?
     while (!glfwWindowShouldClose(window)){
         /* Begin rendering here */
         renderer.Clear();
-        
-        for (int i = 0; i < 499; i++) {
-            history[0][i] = history[0][i+1];
-            history[1][i] = history[1][i+1];
-            history[2][i] = history[2][i+1];
-            history[3][i] = history[3][i+1];
-        }
-        history[0][499] = color[0];
-        history[1][499] = color[1];
-        history[2][499] = color[2];
-        history[3][499] = (color[0] + color[1] + color[2]) / 3;
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
         #ifdef BUILD_TESTS
-        if (currentTest)
-        {
-            currentTest->OnUpdate(0.0f);
-            currentTest->OnRender();
-            ImGui::Begin("Test");
-            if (currentTest != testMenu && ImGui::Button("<-")){
-                delete currentTest;
-                currentTest = testMenu;
+            if (currentTest) {
+                ImGui::Begin(currentTest->GetTitle().c_str());
+                try {
+                    currentTest->OnUpdate((float)glfwGetTime());
+                    currentTest->OnRender();
+                    if (currentTest != testMenu && ImGui::Button("<-")){
+                        delete currentTest;
+                        currentTest = testMenu;
+                    }
+                    currentTest->OnImGUIRender();
+                } catch (std::exception e) {
+                    std::cout << "[error] exception occured durting: " << currentTest->GetTitle() << std::endl;
+                    std::cout << "-- " << e.what() << std::endl;
+                    debug_stream << "[error] exception occured durting: " << currentTest->GetTitle() << "\n";
+                    debug_stream << "-- " << e.what() << "\n";
+                    delete currentTest;
+                    currentTest = testMenu;
+                } catch (...) {
+                    std::cout << "[error] unkown exception!" << std::endl;
+                    debug_stream << "[error] unkown exception!" << "\n";
+                    delete currentTest;
+                    currentTest = testMenu;
+                }
+                ImGui::End();
             }
-            currentTest->OnImGUIRender();
-            ImGui::End();
-        }
-        #endif // BUILD_TESTS
 
         ImGui::Begin("Debug");
-        ImGui::Text("Controls");
-        if(ImGui::Button("Times Step Control")) ts_manual = !ts_manual;
-        ImGui::SliderFloat("float", &ts, 0.0f, 100.0f);
-        ImGui::SliderFloat("camera x", &camera[0], -10.0f, 10.0f);
-        ImGui::SliderFloat("camera y", &camera[1], -10.0f, 10.0f);
-        ImGui::SliderFloat("camera z", &camera[2], -10.0f, 10.0f);
-        ImGui::ColorEdit3("multiply color", (float*)&color);
-        ImGui::PlotHistogram("RGB", (float*)&color, 3, 0, "Color", 0.0f, 1.0f, ImVec2(300.0f, 100.0));
-        ImGui::Text("time = %f", ts);
-        ImGui::PlotLines("Red", history[0], 500, 0, "", 0.0f, 1.0f, ImVec2(300.0f, 50.0f));
-        ImGui::PlotLines("Green", history[1], 500, 0, "", 0.0f, 1.0f, ImVec2(300.0f, 50.0f));
-        ImGui::PlotLines("Blue", history[2], 500, 0, "", 0.0f, 1.0f, ImVec2(300.0f, 50.0f));
-        ImGui::PlotLines("Combined", history[3], 500, 0, "", 0.0f, 1.0f, ImVec2(300.0f, 50.0f));
-
+        ImGui::TextWrapped(debug_stream.str().c_str());
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
             1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
+        #endif // BUILD_TESTS
 
-        if(!ts_manual) ts = (float)glfwGetTime();
-        
-        color[0] = sin(ts                 ) / 2.0 + 0.5;
-        color[1] = sin(ts + 2.0 * PI / 3.0) / 2.0 + 0.5;
-        color[2] = sin(ts + 4.0 * PI / 3.0) / 2.0 + 0.5;
+        // glm::mat4 proj = glm::perspective(45.0f, ((float)WINDOW_WIDTH/(float)WINDOW_HEIGHT), 1.0f, 100.0f);
+        // glm::mat4 view = glm::translate(glm::mat4(1.0f), camera);
+        // glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -10.0f));
+        // glm::mat4 mvp = proj * view * model;
 
-        glm::mat4 proj = glm::perspective(45.0f, ((float)WINDOW_WIDTH/(float)WINDOW_HEIGHT), 1.0f, 100.0f);
-        glm::mat4 view = glm::translate(glm::mat4(1.0f), camera);
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -10.0f));
-        glm::mat4 mvp = proj * view * model;
-        
-        shader.Bind();
-        texture.Bind();
-        shader.SetUniform<float>("u_Time", 1, &ts);
-        shader.SetUniform<float>("u_Color", 3, color);
-        shader.SetUniform<int>("u_Texture", 1, &u_Texture);
-        shader.SetUniformMat4f("u_MVP", 1, mvp);
-        
-
-        // for (unsigned int i = 0; i < 100; i++){
-        //     shader.SetUniform<unsigned int>("u_ID", 1, &i);
-        //     renderer.Draw(va, ib, shader);
-        // }
-
-        renderer.Draw(va, ib, shader);
+        ImGui::ShowMetricsWindow();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -315,12 +223,13 @@ int main(void){ // I forget why does this take in void? is this a typo?
         glfwPollEvents();
         frame++;
     }
+    
     std::cout << std::endl;
 
     std::cout << "\n*** cleaning up... ***" << std::endl;
     std::cout << "------------------------------" << std::endl;
 
-    /* Cleanup ImGui */
+    /* Cleanup Dear ImGui */
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
